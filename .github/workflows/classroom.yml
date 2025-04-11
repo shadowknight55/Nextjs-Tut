@@ -1,0 +1,38 @@
+name: Autograding Tests
+'on':
+- push
+- repository_dispatch
+permissions:
+  checks: write
+  actions: read
+  contents: read
+jobs:
+  run-autograding-tests:
+    runs-on: ubuntu-latest
+    if: github.actor != 'github-classroom[bot]'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Install NPM & JEST
+      id: install-npm-jest
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: Install NPM & JEST
+        setup-command: npm install @latest
+        command: npm install jest
+        timeout: 10
+    - name: Run Test
+      id: run-test
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: Run Test
+        setup-command: npm install jest-environment-jsdom
+        command: npm test
+        timeout: 10
+    - name: Autograding Reporter
+      uses: classroom-resources/autograding-grading-reporter@v1
+      env:
+        INSTALL-NPM-JEST_RESULTS: "${{steps.install-npm-jest.outputs.result}}"
+        RUN-TEST_RESULTS: "${{steps.run-test.outputs.result}}"
+      with:
+        runners: install-npm-jest,run-test
